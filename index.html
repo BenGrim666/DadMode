@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dad Mode — When Mom's Away</title>
+  <meta name="theme-color" content="#0b1220" />
+  <meta name="description" content="Log feeds, diapers, naps, timers, and checklists. Quick nudges for dads running point when mom's away. Local-only; your data stays on this device." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%230b1220'/%3E%3Cpath d='M14 28a18 18 0 0130-14 10 10 0 018 17 10 10 0 01-9 16H22a8 8 0 110-16 10 10 0 00-.7.02A18 18 0 0114 28z' fill='%2338bdf8'/%3E%3C/svg%3E"/>
+  <style>
+    :root { --bg:#0b1220; --panel:#111827; --muted:#1f2937; --text:#e5e7eb; --sub:#9ca3af; --accent:#38bdf8; --good:#34d399; --warn:#f59e0b; --bad:#f87171; }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:linear-gradient(180deg,#0b1220 0%,#0b1220 60%,#0f172a 100%);color:var(--text);line-height:1.35}
+    header{position:sticky;top:0;z-index:5;background:rgba(11,18,32,.8);backdrop-filter:blur(8px);border-bottom:1px solid var(--muted)}
+    .wrap{max-width:980px;margin:0 auto;padding:16px}
+    .title{display:flex;align-items:center;gap:12px}
+    .title h1{margin:0;font-size:22px;letter-spacing:.3px}
+    .pill{font-size:12px;color:#111;background:var(--accent);padding:4px 8px;border-radius:999px;font-weight:700}
+    .grid{display:grid;gap:16px;grid-template-columns:repeat(12,1fr)} @media (max-width:860px){.grid{grid-template-columns:1fr}}
+    .card{grid-column:span 4;background:var(--panel);border:1px solid var(--muted);border-radius:16px;padding:16px;box-shadow:0 10px 24px rgba(0,0,0,.25)}
+    .card.wide{grid-column:span 8} .card.full{grid-column:1 / -1}
+    .card h2{margin:0 0 8px;font-size:16px;color:var(--text)} .muted{color:var(--sub);font-size:13px}
+    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap} .stack{display:grid;gap:8px}
+    button,.btn{appearance:none;border:1px solid var(--muted);background:#0f172a;color:var(--text);padding:10px 12px;border-radius:12px;font-weight:600;cursor:pointer;transition:.15s ease}
+    button:hover,.btn:hover{transform:translateY(-1px);border-color:var(--accent)}
+    .btn-accent{background:var(--accent);color:#07121e;border-color:transparent}
+    .btn-good{background:var(--good);color:#04110c;border-color:transparent}
+    .btn-warn{background:var(--warn);color:#1a1002;border-color:transparent}
+    .btn-bad{background:var(--bad);color:#220a0a;border-color:transparent}
+    input,select,textarea{width:100%;background:#0a1220;border:1px solid var(--muted);color:var(--text);padding:10px 12px;border-radius:12px;font-size:14px;outline:none}
+    textarea{min-height:80px;resize:vertical} label{font-size:12px;color:var(--sub)}
+    .kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .kpi .box{background:#0a1220;border:1px solid var(--muted);padding:10px;border-radius:12px;text-align:center}
+    .kpi .big{font-weight:800;font-size:22px}
+    .list{display:grid;gap:8px}
+    .list .item{padding:10px;border:1px solid var(--muted);border-radius:12px;background:#0a1220;display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .list .item input[type=checkbox]{transform:scale(1.2)}
+    .small{font-size:12px} .footer{text-align:center;color:var(--sub);padding:24px;font-size:12px}
+    .settings-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+    @media (max-width:620px){.settings-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap title">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 11c0-4.418 3.582-8 8-8 2.05 0 3.93.77 5.343 2.037A5 5 0 0 1 21 9.5a5 5 0 0 1-1.86 3.867c.087.39.132.796.132 1.215 0 3.314-2.686 6-6 6H7a4 4 0 1 1 0-8c.37 0 .728.065 1.058.184A8 8 0 0 1 3 11Z" stroke="var(--accent)" stroke-width="2"/></svg>
+      <h1>Dad Mode</h1>
+      <span class="pill">MVP+</span>
+      <div class="muted" style="margin-left:auto">When mom's away: remember the basics.</div>
+    </div>
+  </header>
+
+  <main class="wrap" id="app">
+
+    <section class="grid" id="now-section">
+      <div class="card wide">
+        <h2>What should I do right now?</h2>
+        <div id="nowAdvice" class="muted">Fill in the last feed/diaper/nap times to get smart nudges.</div>
+        <div class="kpi" style="margin-top:8px">
+          <div class="box"><div class="small">Since Feed</div><div class="big" id="kpiSinceFeed">—</div></div>
+          <div class="box"><div class="small">Since Diaper</div><div class="big" id="kpiSinceDiaper">—</div></div>
+          <div class="box"><div class="small">Since Nap</div><div class="big" id="kpiSinceNap">—</div></div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn-good" onclick="quickLog('feed')">Log Feed</button>
+          <button class="btn-accent" onclick="quickLog('diaper')">Log Diaper</button>
+          <button class="btn-warn" onclick="quickLog('nap')">Start Nap Timer</button>
+          <button onclick="openTips()">Show Quick Tips</button>
+          <button onclick="shareBriefing()">Mom's Back Briefing</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Child Profile</h2>
+        <div class="stack">
+          <label>Nickname</label>
+          <input id="p_name" placeholder="e.g., Franny"/>
+          <label>Age (weeks)</label>
+          <input id="p_age" type="number" min="0" placeholder="e.g., 2"/>
+          <label>Pediatrician Phone</label>
+          <input id="p_doc" placeholder="(###) ###‑####"/>
+          <label>Allergies / Notes</label>
+          <textarea id="p_notes" placeholder="Peanut allergy, hates cold wipes, etc."></textarea>
+          <button class="btn" onclick="saveProfile()">Save Profile</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Quick Actions</h2>
+        <div class="stack">
+          <button id="qa_feed" onclick="startTimer('feed', settings.intervals.feed)">Feed Timer</button>
+          <button id="qa_tummy" onclick="startTimer('tummy', settings.intervals.tummy)">Tummy Time</button>
+          <button id="qa_nap" onclick="startTimer('nap', settings.intervals.nap)">Nap</button>
+          <button id="qa_pump" onclick="startTimer('pump', settings.intervals.pump)">Bottle Warm/Pump</button>
+          <div id="activeTimers" class="list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid" style="margin-top:8px">
+      <div class="card full">
+        <h2>Logs</h2>
+        <div class="row">
+          <button class="btn-good" onclick="addLog('feed')">+ Feed</button>
+          <button class="btn-accent" onclick="addLog('diaper')">+ Diaper</button>
+          <button class="btn-warn" onclick="addLog('nap')">+ Nap</button>
+          <button onclick="addLog('med')">+ Med</button>
+          <button onclick="clearLogs()" class="btn-bad">Clear Logs</button>
+          <button onclick="exportDay()" class="btn">Export Today's Summary</button>
+        </div>
+        <div id="logs" class="list" style="margin-top:10px"></div>
+      </div>
+    </section>
+
+    <section class="grid" style="margin-top:8px">
+      <div class="card wide">
+        <h2>Checklist</h2>
+        <div class="muted small">Customizable. Reset each session.</div>
+        <div id="checklist" class="list" style="margin-top:10px"></div>
+        <div class="row" style="margin-top:8px">
+          <input id="newItem" placeholder="Add an item (e.g., pack extra onesies)"/>
+          <button onclick="addItem()">Add</button>
+          <button onclick="resetChecklist()" class="btn">Reset</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Quick Tips</h2>
+        <div id="tips" class="stack small"></div>
+      </div>
+      <div class="card">
+        <h2>Settings</h2>
+        <div class="settings-grid">
+          <div>
+            <label>Feed reminder (min)</label>
+            <input id="s_feed" type="number" min="5" max="240" />
+          </div>
+          <div>
+            <label>Diaper reminder (min)</label>
+            <input id="s_diaper" type="number" min="15" max="360" />
+          </div>
+          <div>
+            <label>Nap window (min)</label>
+            <input id="s_nap" type="number" min="15" max="240" />
+          </div>
+          <div>
+            <label>Tummy time (min)</label>
+            <input id="s_tummy" type="number" min="1" max="60" />
+          </div>
+          <div>
+            <label>Bottle warm/pump (min)</label>
+            <input id="s_pump" type="number" min="5" max="60" />
+          </div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button onclick="saveSettings()" class="btn-accent">Save Settings</button>
+          <button onclick="restoreDefaults()">Restore Defaults</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Emergency</h2>
+        <div class="stack small">
+          <div><strong>Call 911</strong> for life‑threatening emergencies.</div>
+          <button class="btn-bad" onclick="callDoc()">Call Pediatrician</button>
+          <label>Other Emergency Contacts</label>
+          <textarea id="emg" placeholder="Grandma (###) ###‑####\nNeighbor (###) ###‑####"></textarea>
+          <button onclick="saveEmergency()">Save</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid" style="margin-top:8px">
+      <div class="card full">
+        <h2>Notes</h2>
+        <textarea id="notes" placeholder="Anything mom should know when she gets back..."></textarea>
+        <div class="row" style="margin-top:8px">
+          <button onclick="saveNotes()">Save Notes</button>
+          <button onclick="exportData()" class="btn-accent">Export .dadmode.json</button>
+          <input type="file" id="importFile" accept="application/json" style="display:none"/>
+          <button onclick="document.getElementById('importFile').click()">Import</button>
+          <button onclick="installPWA()">Install</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="footer">Dad Mode • Local‑only (no cloud). Your data stays in this browser. • Installable (PWA).</div>
+  </main>
+
+<script>
+  // ======= PWA: create a runtime manifest + service worker (single-file install) =======
+  (function setupPWA(){
+    const manifest = { name:"Dad Mode", short_name:"Dad Mode", start_url:".", display:"standalone", background_color:"#0b1220", theme_color:"#0b1220", icons:[ {src:iconDataURI(64),sizes:"64x64",type:"image/png"},{src:iconDataURI(192),sizes:"192x192",type:"image/png"},{src:iconDataURI(512),sizes:"512x512",type:"image/png"} ] };
+    const manifestBlob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+    const mURL = URL.createObjectURL(manifestBlob);
+    const link = document.createElement('link'); link.rel='manifest'; link.href=mURL; document.head.appendChild(link);
+    const swCode = `self.addEventListener('install',e=>{e.waitUntil(caches.open('dadmode-v1').then(c=>c.addAll(['./'])))});\nself.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)))})`; 
+    const swBlob = new Blob([swCode],{type:'text/javascript'});
+    const swURL = URL.createObjectURL(swBlob);
+    if('serviceWorker' in navigator){ navigator.serviceWorker.register(swURL).catch(()=>{}); }
+  })();
+  async function installPWA(){ alert('To install: use your browser menu → "Add to Home Screen" (mobile) or "Install App" (desktop Chrome/Edge).'); }
+  function iconDataURI(size){ const c=document.createElement('canvas'); c.width=c.height=size; const x=c.getContext('2d'); x.fillStyle='#0b1220'; x.fillRect(0,0,size,size); x.fillStyle='#38bdf8'; const r=size*0.38,cx=size/2,cy=size/2; x.beginPath(); x.arc(cx-r*0.6,cy,r*0.7,0,Math.PI*2); x.arc(cx+r*0.2,cy-r*0.4,r*0.6,0,Math.PI*2); x.arc(cx+r*0.7,cy+r*0.2,r*0.5,0,Math.PI*2); x.fill(); return c.toDataURL('image/png'); }
+
+  // ======= Storage & Defaults =======
+  const SKEY='dadmode_v2';
+  const DEFAULTS={ profile:{name:'',ageWeeks:'',doc:'',notes:''}, emergency:'', checklist:[{t:'Bottle(s) ready / formula measured',done:false},{t:'Diaper bag stocked (diapers, wipes, cream)',done:false},{t:'Onesie + backup outfit packed',done:false},{t:'Warm a bottle / check milk temp',done:false},{t:'Burp cloths and pacifier grabbed',done:false}], logs:[], stamps:{feed:null,diaper:null,nap:null}, notes:'', settings:{intervals:{feed:20,diaper:120,nap:45,tummy:10,pump:15}} };
+  const state = (function(){ try{ return JSON.parse(localStorage.getItem(SKEY))||structuredClone(DEFAULTS);}catch{ return structuredClone(DEFAULTS);} })();
+  function save(){ localStorage.setItem(SKEY, JSON.stringify(state)); }
+  let settings = state.settings || DEFAULTS.settings;
+
+  // ======= Utilities =======
+  const fmt = d=> new Date(d).toLocaleString([], {hour:'2-digit', minute:'2-digit'}) + ' • ' + new Date(d).toLocaleDateString();
+  const minsSince = d=> d ? Math.floor((Date.now()-new Date(d).getTime())/60000) : null;
+  const mmss = sec=> `${Math.floor(sec/60)}m ${sec%60}s`;
+  const todayISO = ()=> new Date().toISOString().slice(0,10);
+
+  // ======= Profile =======
+  function renderProfile(){ p_name.value=state.profile.name; p_age.value=state.profile.ageWeeks; p_doc.value=state.profile.doc; p_notes.value=state.profile.notes; }
+  function saveProfile(){ state.profile.name=p_name.value.trim(); state.profile.ageWeeks=p_age.value.trim(); state.profile.doc=p_doc.value.trim(); state.profile.notes=p_notes.value.trim(); save(); toast('Profile saved.'); }
+  function callDoc(){ const n=state.profile.doc||p_doc.value; if(!n){ toast('Add pediatrician number to Profile.'); return;} location.href=`tel:${n.replace(/[^\d\+]/g,'')}`; }
+
+  // ======= Checklist =======
+  function renderChecklist(){ const el=checklist; el.innerHTML=''; state.checklist.forEach((it,idx)=>{ const row=document.createElement('div'); row.className='item'; row.innerHTML=`<div class="row"><input type="checkbox" ${it.done?'checked':''} onchange="toggleItem(${idx},this.checked)"><span>${it.t}</span></div><div class="row"><button onclick="delItem(${idx})">Del</button></div>`; el.appendChild(row); }); }
+  function addItem(){ const v=newItem.value.trim(); if(!v) return; state.checklist.push({t:v,done:false}); newItem.value=''; save(); renderChecklist(); }
+  function toggleItem(i,checked){ state.checklist[i].done=checked; save(); }
+  function delItem(i){ state.checklist.splice(i,1); save(); renderChecklist(); }
+  function resetChecklist(){ state.checklist.forEach(i=>i.done=false); save(); renderChecklist(); }
+
+  // ======= Logs =======
+  function addLog(type){ const entry={id:crypto.randomUUID(),type,at:new Date().toISOString(),note:''}; state.logs.unshift(entry); state.stamps[type]=entry.at; save(); renderLogs(); renderKPIs(); advise(); }
+  function quickLog(type){ addLog(type); toast(`${type[0].toUpperCase()+type.slice(1)} logged.`); }
+  function clearLogs(){ if(confirm('Clear ALL logs?')){ state.logs=[]; save(); renderLogs(); } }
+  function renderLogs(){ const el=logs; el.innerHTML=''; if(!state.logs.length){ el.innerHTML=`<div class="muted">No logs yet.</div>`; return;} state.logs.forEach(e=>{ const row=document.createElement('div'); row.className='item'; const label=({feed:'Feeding',diaper:'Diaper',nap:'Nap',med:'Medication'})[e.type]||e.type; row.innerHTML=`<div><strong>${label}</strong><div class="small muted">${fmt(e.at)}</div></div><div class="row"><button onclick="editNote('${e.id}')">Note</button><button onclick="delLog('${e.id}')">Del</button></div>`; el.appendChild(row); }); }
+  function delLog(id){ state.logs=state.logs.filter(x=>x.id!==id); save(); renderLogs(); }
+  function editNote(id){ const it=state.logs.find(x=>x.id===id); if(!it) return; const v=prompt('Add/Edit note for this entry:', it.note||''); if(v!==null){ it.note=v; save(); renderLogs(); } }
+
+  // ======= KPIs & Advice =======
+  function renderKPIs(){ const a=minsSince(state.stamps.feed); const b=minsSince(state.stamps.diaper); const c=minsSince(state.stamps.nap); kpiSinceFeed.textContent=a!=null?`${a} min`:'—'; kpiSinceDiaper.textContent=b!=null?`${b} min`:'—'; kpiSinceNap.textContent=c!=null?`${c} min`:'—'; }
+  function advise(){ const name=state.profile.name||'Baby'; const iv=state.settings?.intervals||DEFAULTS.settings.intervals; const since={feed:minsSince(state.stamps.feed),diaper:minsSince(state.stamps.diaper),nap:minsSince(state.stamps.nap)}; let msg=`Hi, ${name}'s basics look good. Log something to get suggestions.`; if(since.feed==null&&since.diaper==null&&since.nap==null){ msg='Tip: log your first feed, diaper, or nap to start tracking.'; } else { const cues=[]; if(since.feed!=null && since.feed >= (iv.diaper/1.6)) cues.push('Offer a bottle soon'); if(since.diaper!=null && since.diaper >= iv.diaper) cues.push('Check diaper'); if(since.nap!=null && since.nap >= iv.nap) cues.push('Start nap wind‑down'); msg=cues.length?cues.join(' • '):'You’re on pace. Hydrate and breathe.'; } nowAdvice.textContent=msg; }
+
+  // ======= Settings =======
+  function renderSettings(){ const iv=state.settings?.intervals||DEFAULTS.settings.intervals; s_feed.value=iv.feed; s_diaper.value=iv.diaper; s_nap.value=iv.nap; s_tummy.value=iv.tummy; s_pump.value=iv.pump; }
+  function saveSettings(){ const iv=(state.settings?.intervals)||(state.settings={intervals:{...DEFAULTS.settings.intervals}}).intervals; iv.feed=clampN('s_feed',5,240); iv.diaper=clampN('s_diaper',15,360); iv.nap=clampN('s_nap',15,240); iv.tummy=clampN('s_tummy',1,60); iv.pump=clampN('s_pump',5,60); settings=state.settings; save(); renderQuickActionLabels(); toast('Settings saved.'); advise(); }
+  function restoreDefaults(){ state.settings=structuredClone(DEFAULTS.settings); settings=state.settings; save(); renderSettings(); renderQuickActionLabels(); toast('Defaults restored.'); advise(); }
+  function clampN(id,min,max){ const v=Number(document.getElementById(id).value)||min; return Math.min(max, Math.max(min,v)); }
+  function renderQuickActionLabels(){ const iv=state.settings.intervals; qa_feed.textContent=`Feed Timer (${iv.feed} min)`; qa_tummy.textContent=`Tummy Time (${iv.tummy} min)`; qa_nap.textContent=`Nap (${iv.nap} min)`; qa_pump.textContent=`Bottle Warm/Pump (${iv.pump} min)`; }
+
+  // ======= Timers =======
+  const timers=new Map();
+  function startTimer(kind,minutes){ const id=crypto.randomUUID(); const end=Date.now()+minutes*60*1000; timers.set(id,{id,kind,end}); renderTimers(); const tick=setInterval(()=>{ const t=timers.get(id); if(!t) return clearInterval(tick); const left=Math.max(0,Math.floor((t.end-Date.now())/1000)); const el=document.querySelector(`[data-timer='${id}'] .left`); if(el) el.textContent=mmss(left); if(left<=0){ clearInterval(tick); doneTimer(id);} },1000); }
+  function renderTimers(){ const wrap=activeTimers; wrap.innerHTML=''; timers.forEach(t=>{ const row=document.createElement('div'); row.className='item'; row.dataset.timer=t.id; row.innerHTML=`<div><strong>${t.kind.toUpperCase()}</strong><div class='small muted'>remaining <span class='left'></span></div></div><div class='row'><button onclick="cancelTimer('${t.id}')">Cancel</button></div>`; wrap.appendChild(row); }); }
+  function cancelTimer(id){ timers.delete(id); renderTimers(); }
+  function doneTimer(id){ const t=timers.get(id); if(!t) return; timers.delete(id); renderTimers(); toast(`${t.kind} timer done.`); try{ new AudioContext().close(); }catch{} }
+
+  // ======= Tips =======
+  const TIPS=['Warm bottles by standing in warm water, not the microwave.','Diaper change flow: clean → cream (if needed) → fresh diaper → wash hands.','Burp mid‑feed and end‑feed. If fussy, try upright hold and gentle sway.','For spit‑up: small amounts are common. Watch comfort and wet diapers.','Tummy time: a few minutes, a few times a day when alert.'];
+  function renderTips(){ tips.innerHTML=''; TIPS.forEach(x=>{ const p=document.createElement('div'); p.textContent='• '+x; tips.appendChild(p); }); }
+  function openTips(){ tips.scrollIntoView({behavior:'smooth',block:'center'}); }
+
+  // ======= Notes/Emergency =======
+  function saveNotes(){ state.notes=notes.value; save(); toast('Notes saved.'); }
+  function saveEmergency(){ state.emergency=emg.value; save(); toast('Emergency contacts saved.'); }
+
+  // ======= Import/Export (data) =======
+  function exportData(){ const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='dadmode-export.json'; a.click(); }
+  importFile.addEventListener('change',e=>{ const f=e.target.files[0]; if(!f) return; const reader=new FileReader(); reader.onload=()=>{ try{ const data=JSON.parse(reader.result); ['profile','emergency','checklist','logs','stamps','notes','settings'].forEach(k=>{ if(data[k]!==undefined) state[k]=data[k]; }); save(); init(); toast('Import complete.'); }catch{ alert('Invalid file.'); } }; reader.readAsText(f); });
+
+  // ======= Day Summary / Briefing =======
+  function todayLogs(){ const d=todayISO(); return state.logs.filter(x=>x.at.slice(0,10)===d); }
+  function formatSummary(){ const name=state.profile.name||'Baby'; const lines=[`Dad Mode — Daily Summary (${new Date().toLocaleDateString()})`, `Child: ${name}`,'']; const groups={feed:[],diaper:[],nap:[],med:[]}; todayLogs().forEach(e=>groups[e.type]?.push(e)); const labels={feed:'Feedings',diaper:'Diapers',nap:'Naps',med:'Medication'}; for(const k of Object.keys(groups)){ if(groups[k].length){ lines.push(`== ${labels[k]} (${groups[k].length}) ==`); groups[k].slice().reverse().forEach(e=>{ lines.push(`• ${fmt(e.at)}${e.note? ' — '+e.note:''}`); }); lines.push(''); } } if(state.notes?.trim()){ lines.push('Notes for Mom:'); lines.push(state.notes.trim()); lines.push(''); } return lines.join('\n'); }
+  async function exportDay(){ const text=formatSummary(); const blob=new Blob([text],{type:'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`DadMode-Summary-${todayISO()}.txt`; a.click(); if(navigator.clipboard){ try{ await navigator.clipboard.writeText(text); toast('Summary copied to clipboard.'); }catch{} } }
+  async function shareBriefing(){ const text=formatSummary(); if(navigator.share){ try{ await navigator.share({title:'Dad Mode — Daily Summary', text}); }catch{} } else { await exportDay(); toast('Shared via file & clipboard (no Web Share).'); } }
+
+  // ======= Toast & Boot =======
+  function toast(msg){ const t=document.createElement('div'); t.textContent=msg; Object.assign(t.style,{position:'fixed',bottom:'20px',left:'50%',transform:'translateX(-50%)',background:'#111827',border:'1px solid var(--muted)',padding:'10px 12px',borderRadius:'10px',boxShadow:'0 6px 18px rgba(0,0,0,.35)',zIndex:1000}); document.body.appendChild(t); setTimeout(()=>t.remove(),1800); }
+  function init(){ renderProfile(); renderChecklist(); renderLogs(); renderKPIs(); renderTips(); renderSettings(); renderQuickActionLabels(); notes.value=state.notes||''; emg.value=state.emergency||''; advise(); setInterval(()=>{ renderKPIs(); advise(); }, 30*1000); }
+  init();
+</script>
+</body>
+</html>
